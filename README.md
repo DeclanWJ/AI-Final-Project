@@ -1,6 +1,9 @@
 # AI-Final-Project
 Repository for our final project in Artificial Intelligence
 
+Old School Runescape Reinforcement Learning Agent Project
+Authors: Declan Jeffrey, Shane Phillips, Wren Maybury
+
 Meeting # 1 (3/21/2021)
 Notes:
   Start with tree cutting, Q-learning agent. 
