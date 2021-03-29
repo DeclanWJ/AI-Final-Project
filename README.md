@@ -26,3 +26,18 @@ Progress:
   Created Final Report copy in open leaf, and started editing
   Coded the ability to find the closest trees and tell us what it is and where it is
   
+  Meeting #2 (3/28/2021)
+  Progress:
+    -Made agent find the nearest tree and go cut it down. 
+    *How do we make the agent go to the best tree, not necessarily the closest. (has to go around walls and take a longer path, while passing other trees)
+    -Include some sort of epsilon? Where he may chose to explore and go to a random tree, or randomly deposit the resources. 
+    
+  TO DO:
+    -Conditions for being high enough level, having an axe, someone else interacting with the tree
+    -Finding the real closest tree , not having to go around walls 
+    -Q-Learning : 
+      + Actions : (go to tree, chop tree, deposit)
+      + Rewards : (gold , amount of lumber, experience)
+      + Punishments : (time, distance)
+    -Select starting space and create episode of cutting trees and depositing, learn based on how good they are. 
+  
