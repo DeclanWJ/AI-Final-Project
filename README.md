@@ -41,3 +41,29 @@ Progress:
       + Punishments : (time, distance)
     -Select starting space and create episode of cutting trees and depositing, learn based on how good they are. 
   
+  Meeting #3 (4/4/2021)
+  Progress:
+    -Finished polishing off the basic lumber collecter. 
+      *Jumping off point. Something to gain info from, gain base data. 
+    -Started trying to implement Q-learning into the agent.
+      *Do we need a reinforcement learning agent class? Or can we just implement a Q-learning class and have all the necessary info in there?
+
+  TO DO/ CONSIDER: 
+    -Q-learning class: evalue state action pairs. Determine the best action based on those state, action pairs. 
+      *Learning rate, epsilon, discount
+      *When determing the "Closest" tree, don't base off of something generic like manhattan distance, but the actualy path length to get there.
+    -3 basic agents: Lumber, Mining, Fishing
+      *Fishing = Probability of getting different fish, so that would affect the exp/gold gained. 
+      *Restrict search area/ Allow for the use of additional banks 
+      *Episodes can be based on starting -> getting resources -> and banking. 
+       Our final agent will ideally not just bank when his inventory is full,  but when it is the most optimal action (or randomly/epsilon). 
+       The performance of the Q-learning agent should then be based on how quickly he was able to collect those resources/gold/exp and bank them. 
+       Whereas the performance of the baseline agents is just based on how quickly they can fill up their inventory and bank it. 
+      *Consider respawn rate of resources, how would that work? 
+    -3 Q-learning agents: Lumber, Mining, Fishing
+    -POSSIBLY: Combat. See how the other 3 go, and maybe try and dabble with the combat a little
+    -1 basic agent that can collect all 3 resources
+    -1 Q-learning agent that can optimize gold and exp while collecting all the resources. 
+    -Consider epsilon, and the idea of exploration. Not necessarily just always cutting the cloest tree. 
+    -Text File with learned Q-values , And another to store the baseline so we can re learn when we want to 
+    
