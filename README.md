@@ -67,3 +67,16 @@ Progress:
     -Consider epsilon, and the idea of exploration. Not necessarily just always cutting the cloest tree. 
     -Text File with learned Q-values , And another to store the baseline so we can re learn when we want to 
     
+ Meeting #4 (4/9/2021)
+ Progress:
+  - Got the baseline agent finalized. With GUI displaying path to tree agent is going to, as well as displaying time taken in each episode. 
+  - Also fixed pathing issue of finding closest tree but wasnt really (closest manhattan distance)
+  - Worked on report, got a good baseline for that as well. Set up tables to store information of q-learning agents episodes. 
+ TO DO/Consider
+  -Make other 2 baseline agents (shouldn't be too bad)
+  -Start implementing Q-learning. 
+    + List of actions should include not just closest tree, but a list of the top 10-20 cloest trees. 
+    + There should then be some epsilon, meaning a random chance to not go to the seemingly optimal solution but explore a different close tree. 
+    + By going to a random tree, the agent learns the value of that action. Is it going to be the new optimal action? Or is it not worth it?
+    + How many runs do we need? 5, 10, 50, 100? -> Is there a limit, and does OSBOT stop you from running that many times. 
+    
