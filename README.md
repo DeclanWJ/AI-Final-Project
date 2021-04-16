@@ -79,4 +79,23 @@ Progress:
     + There should then be some epsilon, meaning a random chance to not go to the seemingly optimal solution but explore a different close tree. 
     + By going to a random tree, the agent learns the value of that action. Is it going to be the new optimal action? Or is it not worth it?
     + How many runs do we need? 5, 10, 50, 100? -> Is there a limit, and does OSBOT stop you from running that many times. 
-    
+
+Meeting #5 (4/16/2021)
+
+Progress:
+  + Even more problems with getting OS BOT working on Declan's computer. Keeps giving us trouble when trying to set up java, not sure why. 
+  + Started implementing Q-learning into the wood cutting agent
+  + Base file = agent class (Woodcutter, fishing, mining)
+  + AI FINAL PROJECT file = reinforcement learning agent class 
+  + Q learning file = q learning agent file
+  + State class -> Class to store the state information (player position, player health, list of close trees, list of close enemies, list of close player)
+  + Actions -> Probably good to just store in a data structre -> (go to tree, chop the tree/mine, deposit materials, movement)
+  + Do we want to store learned values in a txt file? That would mean he does not start from square zero when learning on each start of the learning. 
+  + State Class:
+    - Things to consider in state: Playe position, trees aroung that position, enemies around that position, players health  
+    - Epsilon -> Going to never before seen trees 
+  
+ TODO/Consider
+  + Finish Q-learning for wood cutter
+  + Is it too comlicated? Or can we apply it to other tasks. 
+  +
