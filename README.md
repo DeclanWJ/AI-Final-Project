@@ -98,4 +98,10 @@ Progress:
  TODO/Consider
   + Finish Q-learning for wood cutter
   + Is it too comlicated? Or can we apply it to other tasks. 
-  +
+  
+Meeting #6 (4/18/2021)
+
+Progress:
+  + Each individual state would be each individual tile. 
+  + Actions: North, east, south, west, cut tree, deposit 
+  + Legal actions: restrict directions depending on surrounding environment (and considered range/total range), cut tree only legal when by tree, deposit only legal when by bank
