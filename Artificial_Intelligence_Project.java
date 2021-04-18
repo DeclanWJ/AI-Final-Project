@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -22,36 +23,40 @@ import org.osbot.rs07.script.ScriptManifest;
 public class Artificial_Intelligence_Project extends Script
 {
 	Player agent;
+	Player validPlayer;
 	Position startingPosition;
 	Entity closestTree;
 	WebWalkEvent walkToNode;
 	LinkedList<Position> pathPositions;
 	boolean realDistance = true;
 	LocalPathFinder pathFinder;
-	boolean gather = false;
-	
+	boolean gather = true;
+	boolean pause = false;
+
 	long startTime;
 	double gatherTime = 0;
 	ArrayList<Double> gatherRunTimes = new ArrayList<Double>();
-
+	ArrayList<Entity> knownTrees = new ArrayList<Entity>();
 	ArrayList<String> treeNames = new ArrayList<String>();
-
+	State currentState;
+	State startState;
 	public void onStart() throws InterruptedException
 	{
 		super.onStart();
-		treeNames.add("Willow");
+		//		treeNames.add("Willow");
 		treeNames.add("Tree");
 		//		treeNames.add("Strong Yew");
 
 		pathFinder = new LocalPathFinder(getBot());
 
 		agent = myPlayer();
-		startingPosition = new Position(3222, 3219, 0);
+		startingPosition = new Position(3222, 3219, 0); 
 		log("Starting position is: " + startingPosition);
 
-		//		getWalking().webWalk(startingPosition);
+		getWalking().webWalk(startingPosition);
 
 		startTime = System.currentTimeMillis();
+		startState = new State(agent, knownTrees);
 	}
 
 	//Code will run when the script is closed
@@ -62,48 +67,58 @@ public class Artificial_Intelligence_Project extends Script
 
 	//Code will run every loop/tick - Bulk of code will stem from here (method calls will primarily occur here)
 	public int onLoop() throws InterruptedException 
-	{
-//				if(areaContainsAnimatingPlayer(agent.getArea(10)))
-//				{
-//					log("There is at least 1 player animated within a 10 tile radius of the agent");
-//				}
-//				else
-//				{
-//					log("No players found animated within 10 tile radius of the agent");
-//				}
+	{	
+		currentState = new State(agent, knownTrees);
 
-		//If inventory is not full
-		if(!getInventory().isFull() && !agent.isAnimating())
+		adjustCamera();
+
+		if(agent.getHealthPercent() <= 50) //Health check
 		{
-			closestTree = getObjects().closest(realDistance, tree -> treeNames.contains(tree.getName()) && getMap().canReach(tree)); //Using the OSBot API Filter object to find the closest tree of a valid name-type, that can be accessed by the agent's character
-			
-			log("closest tree has animated player beside it: " + areaContainsAnimatingPlayer(closestTree.getArea(1)));
-			
-			if(closestTree == null) //If a tree meeting the filter requirements above is not found 
-			{
-				log("No valid trees nearby...");
-			}
-
-			else //If a tree meeting the filter requirements above is found
-			{
-				log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
-
-				pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
-				if(pathPositions != null)
-				{
-					log("Length of pathPositions list: " + (pathPositions.size() - 1));
-				}
-
-				if(gather)
-					chopTree(closestTree);
-				//				closestTree = null;
-			}	
+			pause = true;
+			log("Agent has been paused, returning to start position.");
+			getWalking().webWalk(startingPosition);
 		}
 
-		//If inventory is full
-		if(getInventory().isFull())
+		if(pause == true && agent.getHealthPercent() == 100)
 		{
-			bank(); 
+			pause = false;
+			log("Agent has been un-paused.");
+		}
+
+		if(!pause) //Pause condtion
+		{
+			//If inventory is not full
+			if(!getInventory().isFull() && !agent.isAnimating())
+			{
+				//			 && !areaContainsAnimatingPlayer(tree.getArea(2)) additional parameter for checking for other players near chosen tree
+				closestTree = getObjects().closest(realDistance, tree -> treeNames.contains(tree.getName()) && getMap().canReach(tree)); //Using the OSBot API Filter object to find the closest tree of a valid name-type, that can be accessed by the agent's character
+
+				if(closestTree == null) //If a tree meeting the filter requirements above is not found 
+				{
+					log("No valid trees nearby...");
+				}
+
+				else //If a tree meeting the filter requirements above is found
+				{
+					log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
+
+					pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
+					if(pathPositions != null)
+					{
+						log("Length of pathPositions list: " + (pathPositions.size() - 1));
+					}
+
+					if(gather)
+						chopTree(closestTree);
+					//				closestTree = null;
+				}	
+			}
+
+			//If inventory is full
+			if(getInventory().isFull())
+			{
+				bank(); 
+			}
 		}
 
 		return 1000; //Milliseconds until next loop/tick
@@ -115,8 +130,14 @@ public class Artificial_Intelligence_Project extends Script
 		g.drawString("Debug Information: ", 5, 30);
 		g.drawString("Player Grid Location (X,Y): (" + agent.getX() + "," + agent.getY() + ")", 5, 45);
 		g.drawString("Agent Inventory Spaces Remaining: " + getInventory().getEmptySlotCount(), 5, 90);
+		g.drawString("Gathering enabled: " + gather, 5, 120);
+		g.drawString("Pause enabled: " + pause, 5, 135);
+
 		if(!gatherRunTimes.isEmpty())
 			g.drawString("Gathering Run Time (in seconds):" + gatherRunTimes.toString(), 5, 105);
+		else
+			g.drawString("Gathering Run Time (in seconds):", 5, 105);
+
 		if(closestTree != null) 
 		{
 			g.drawString("Target Tree: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")", 5, 60);
@@ -126,7 +147,7 @@ public class Artificial_Intelligence_Project extends Script
 		{
 			g.drawString("Target Tree not selected", 5, 60);
 		}
-		//		g.drawString("Agent Inventory Spaces Remaining: " + getInventory().getEmptySlotCount(), 5, 90);
+
 		if(pathPositions != null)
 		{
 			for(int i = 0; i < pathPositions.size(); i++)
@@ -134,11 +155,26 @@ public class Artificial_Intelligence_Project extends Script
 				g.drawPolygon(pathPositions.get(i).getPolygon(getBot()));
 			}
 		}
+
+//		if(currentState != null)
+//		{
+//			List<Position> temp = currentState.getConsiderArea().getPositions();
+//
+//			g.setPaint(Color.RED);
+//
+//			for(int i = 0; i < temp.size(); i++)
+//			{
+//				g.drawPolygon(temp.get(i).getPolygon(getBot()));
+//			}
+//
+//		}
+
 	}
 
 	public boolean areaContainsAnimatingPlayer(Area a) 
 	{
-		Player validPlayer = getPlayers().closest(player -> player != null && !player.equals(agent));
+		//TODO: Make the check for the list of players around that aren't the agent, not just the closest
+		validPlayer = getPlayers().closest(player -> !player.equals(null) && !player.equals(agent));
 
 		if(a.contains(validPlayer) == true) //If there is a player in the area
 		{
@@ -162,8 +198,10 @@ public class Artificial_Intelligence_Project extends Script
 
 		//		walkToNode = new WebWalkEvent(tree.getArea(1));
 		//		execute(walkToNode);
+		adjustCamera();
 		if(pathPositions != null)
 			getWalking().walkPath(pathPositions);
+		adjustCamera();
 		tree.interact("Chop down"); //Agent will select the "Chop down" action on the passed tree	
 	}
 
@@ -187,5 +225,15 @@ public class Artificial_Intelligence_Project extends Script
 			if(getInventory().isEmpty())
 				getWalking().webWalk(startingPosition); //Move agent's character back to the starting tile
 		}
+		
+		adjustCamera();
+	}
+	
+	public void adjustCamera()
+	{
+		if(getCamera().getPitchAngle() != 60)
+			getCamera().movePitch(60);
+
+		getCamera().moveYaw(agent.getRotationForCamera());
 	}
 }
