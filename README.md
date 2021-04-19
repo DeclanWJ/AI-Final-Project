@@ -103,7 +103,12 @@ Meeting #6 (4/18/2021)
 
 Progress:
   + Each individual **state** would be each individual tile. 
-  + **Actions**: North, east, south, west, cut tree, deposit 
-  + **Legal action**s: restrict directions depending on surrounding environment (and considered range/total range), cut tree only legal when by tree, deposit only legal when by bank
+  + **Actions**: North, east, south, west, cut tree, deposit  
+  + **Legal action**s: restrict directions depending on surrounding environment (and considered range/total range), cut tree only legal when by tree, deposit only legal when by bank 
+    - additional checks to make sure that: if inventory is full you cannot chop a tree, if inventory is not empty you can deposit. 
   + Creating **agent bounds** (max are the agent should go to -> limit scope of game, because otherwise state space would be massive) 
   + The agent also has a **conisdered range**: within the bounds of the game, only consider trees/materials so close.(too unoptimal to go too far, but can still happen to an extent)
+  + Creating **Actions Class** to store information about the actions and how to use them
+  + Got **Get Legal Actions** working, but had to place it in the main (AI project) -> Problems there??
+    - Had to get specific with chop wood and bank, make sure inventory is full/empty and make sure we are by a tree to chop
+  + *KEEP IN MIND* Do we want to turn off auto retaliate?
