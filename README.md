@@ -122,4 +122,5 @@ Progress:
 Consider: 
   + Storing Q-values. Dictionary type storage with (state,action) as key. Then state values are calculated from all possible q value
   + Create feature values for important state space info like: closest tree, closest enemy, distance to bank. Better help learning process
-  + Negative rewards (punishments) , to better evaluate state, acition pairs. Time, enemies, other players. 
+  + Negative rewards (punishments) , to better evaluate state, acition pairs. Time, enemies, other players.
+  + Make the agent chop the tree if it has never evaluated that state before. (needs to learn reward) 
