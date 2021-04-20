@@ -79,6 +79,27 @@ public class Artificial_Intelligence_Project extends Script
 	{	
 		currentState = new State(agent, knownTrees, getInventory().isFull(), getInventory().isEmpty());
 		log("Legal actions in state: " + getLegalActions(currentState).toString());
+		if(getLegalActions(currentState).contains("North"))
+		{
+			log("North is a possible action. ");
+			takeAction("North");	
+		}
+		else if(getLegalActions(currentState).contains("East"))
+		{
+			log("East is a possible action. ");
+			takeAction("East");	
+		}
+		else if(getLegalActions(currentState).contains("South"))
+		{
+			log("South is a possible action. ");
+			takeAction("South");	
+		}
+		else if(getLegalActions(currentState).contains("West"))
+		{
+			log("West is a possible action. ");
+			takeAction("West");	
+		}
+		
 		adjustCamera();
 
 		if(agent.getHealthPercent() <= 50) //Health check
@@ -279,6 +300,61 @@ public class Artificial_Intelligence_Project extends Script
 		if(!s.inventoryEmpty)
 			legalActions.add("Bank");
 		return legalActions;
+	}
+	
+	void takeAction(String action)
+	{
+		log("Take action has been called.");
+		Position agentPosition = currentState.getAgentPosition();
+		
+		if(action.equals("North"))
+		{
+			log("Action to be taken: North");
+			
+			Position north = new Position(agentPosition.getX(), agentPosition.getY()+1, agentPosition.getZ());
+			WalkingEvent desiredMovement = new WalkingEvent(north);
+			desiredMovement.setMinDistanceThreshold(0);
+			
+			execute(desiredMovement);
+		}
+		if(action.equals("East"))
+		{
+			log("Action to be taken: East");
+			
+			Position east = new Position(agentPosition.getX()+1, agentPosition.getY(), agentPosition.getZ());
+			WalkingEvent desiredMovement = new WalkingEvent(east);
+			desiredMovement.setMinDistanceThreshold(0);
+			
+			execute(desiredMovement);
+		}
+		if(action.equals("South"))
+		{
+			log("Action to be taken: South");
+			
+			Position south = new Position(agentPosition.getX(), agentPosition.getY()-1, agentPosition.getZ());
+			WalkingEvent desiredMovement = new WalkingEvent(south);
+			desiredMovement.setMinDistanceThreshold(0);
+			
+			execute(desiredMovement);
+		}
+		if(action.equals("West"))
+		{
+			log("Action to be taken: West");
+			
+			Position west = new Position(agentPosition.getX()-1, agentPosition.getY(), agentPosition.getZ());
+			WalkingEvent desiredMovement = new WalkingEvent(west);
+			desiredMovement.setMinDistanceThreshold(0);
+			
+			execute(desiredMovement);
+		}
+		if(action.equals("Chop Wood"))
+		{
+			
+		}
+		if(action.equals("Bank"))
+		{
+			
+		}
 	}
 }
 

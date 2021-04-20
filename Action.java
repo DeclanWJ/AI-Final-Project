@@ -6,10 +6,36 @@ import org.osbot.rs07.script.Script;
 
 public class Action 
 {
-	ArrayList<String> getLegalActions(State s)
+	public Action()
 	{
-		ArrayList<String> legalActions = new ArrayList<String>();
-		getMap().canReach();
-		return legalActions;
+		
+	}
+	
+	void takeAction(String action)
+	{
+		if(action.equals("North"))
+		{
+			
+		}
+		if(action.equals("East"))
+		{
+			
+		}
+		if(action.equals("South"))
+		{
+			
+		}
+		if(action.equals("West"))
+		{
+			
+		}
+		if(action.equals("Chop Wood"))
+		{
+			
+		}
+		if(action.equals("Bank"))
+		{
+			
+		}
 	}
 }
