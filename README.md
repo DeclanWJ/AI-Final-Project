@@ -112,3 +112,14 @@ Progress:
   + Got **Get Legal Actions** working, but had to place it in the main (AI project) -> Problems there??
     - Had to get specific with chop wood and bank, make sure inventory is full/empty and make sure we are by a tree to chop
   + *KEEP IN MIND* Do we want to turn off auto retaliate?
+
+Meeting #7 (4/19/2021)
+
+Progress: 
+  + Have to do our action stuff in the main agent file instead of being able to create a supporting action file. This is due to how the osbot domain works, functional scripts have access to more commands than supporting scripts. And making actions as its own functional script would make no sense. 
+  + Creating nested hash map to store q values for state and actions 
+ 
+Consider: 
+  + Storing Q-values. Dictionary type storage with (state,action) as key. Then state values are calculated from all possible q value
+  + Create feature values for important state space info like: closest tree, closest enemy, distance to bank. Better help learning process
+  + Negative rewards (punishments) , to better evaluate state, acition pairs. Time, enemies, other players. 
