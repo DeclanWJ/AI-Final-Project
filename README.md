@@ -124,3 +124,20 @@ Consider:
   + Create feature values for important state space info like: closest tree, closest enemy, distance to bank. Better help learning process
   + Negative rewards (punishments) , to better evaluate state, acition pairs. Time, enemies, other players.
   + Make the agent chop the tree if it has never evaluated that state before. (needs to learn reward) 
+
+Meeting #8 (4/21/2021)
+
+Progress:
+  + change around some stuff: banking is only action when inventory is full (maybe mess with), Change starting posisition so he is close to trees to allow him to learn faster
+  + Start with empty map of maps and initialize each state as you get to it.
+  + Had to create copies to ensure we were not changing each states q values
+  + **Created states with q values initialized to zero**
+  + **Epsilon greedy**: Had to use integer to use as chance for taking random action
+
+Consider: 
+  + starting with a high epsilon and decreasing over episodes to avoid taking the same path over and over 
+  + If we want to store q values in a file, we would want to keep track of the last epsilon value used
+  + We need reference to legal actions in the current state. (sending a list of legal actions to the state when we create it, so we can reference it)
+
+
+  
