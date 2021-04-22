@@ -11,47 +11,27 @@ import org.osbot.rs07.script.Script;
 
 public class State
 {
-	Player agent;
+//	Player agent;
 	Position agentPosition;
 	int range = 20;
 	Area agentBounds;
 	Area consideredArea;
 	Area initialArea;
-	ArrayList<Entity> knownTrees;
 	boolean inventoryFull;
 	boolean inventoryEmpty;
 	
-	public State(Player agent, ArrayList<Entity> knownTrees, boolean inventoryFull, boolean inventoryEmpty)
+	public State(Position agentPosition, boolean inventoryFull)
 	{
-		this.agent = agent;
-		agentPosition = agent.getPosition();
+//		this.agent = agent;
+		this.agentPosition = agentPosition;
 		
 		this.inventoryFull = inventoryFull;
-		this.inventoryEmpty = inventoryEmpty;
-		
 		createConsideredArea();
 		
-		this.knownTrees = knownTrees;
-		
-	}
-	
-	public ArrayList<Entity> getConsideredTrees()
-	{
-		ArrayList<Entity> consideredTrees = new ArrayList<Entity>();
-		for(int i = 0; i < knownTrees.size(); i++)
-		{
-			if(consideredArea.contains(knownTrees.get(i)))
-			{
-				consideredTrees.add(knownTrees.get(i));
-			}
-		}
-		
-		return consideredTrees;
 	}
 	
 	public void createConsideredArea()
 	{
-		agentPosition = agent.getPosition();
 		Position boundsNW = new Position(3136, 3240, 0);
 		Position boundsSE = new Position(3266, 3200, 0);
 		agentBounds = new Area(boundsNW.getX(), boundsNW.getY(), boundsSE.getX(), boundsSE.getY());

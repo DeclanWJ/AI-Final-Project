@@ -42,30 +42,36 @@ public class Artificial_Intelligence_Project extends Script
 	long startTime;
 	double gatherTime = 0;
 	ArrayList<Double> gatherRunTimes = new ArrayList<Double>();
-	ArrayList<Entity> knownTrees = new ArrayList<Entity>();
 	ArrayList<String> treeNames = new ArrayList<String>();
 	State currentState;
 	State startState;
+
+	double explorationRate; //Want an initially high value, and taper down as more information is gotten
+
+	QLearning_Agent qAgent;
 	public void onStart() throws InterruptedException
 	{
 		super.onStart();
-		//		treeNames.add("Willow");
+		//treeNames.add("Willow");
 		treeNames.add("Tree");
-		//		treeNames.add("Strong Yew");
+		//treeNames.add("Strong Yew");
 
 		pathFinder = new LocalPathFinder(getBot());
 
 		agent = myPlayer();
-		startingPosition = new Position(3222, 3219, 0); 
+		startingPosition = new Position(3160, 3232, 0); 
 		log("Starting position is: " + startingPosition);
 
-		if(!getInventory().isEmpty())
+		while(!getInventory().isEmpty())
 			bank();
 
 		getWalking().webWalk(startingPosition);
 
+		qAgent = new QLearning_Agent();
+		explorationRate = 1.0;
+		
 		startTime = System.currentTimeMillis();
-		startState = new State(agent, knownTrees, getInventory().isFull(), getInventory().isEmpty());
+		startState = new State(agent.getPosition(), getInventory().isFull());
 	}
 
 	//Code will run when the script is closed
@@ -77,31 +83,21 @@ public class Artificial_Intelligence_Project extends Script
 	//Code will run every loop/tick - Bulk of code will stem from here (method calls will primarily occur here)
 	public int onLoop() throws InterruptedException 
 	{	
-		currentState = new State(agent, knownTrees, getInventory().isFull(), getInventory().isEmpty());
+		currentState = new State(agent.getPosition(), getInventory().isFull());
+		log("Current state was known: " + qAgent.checkIfKnown(currentState));
+
+//		log("Current state Qval information: " + qAgent.mapOfQValues.toString());
+		//		log("Incrementing value of North action...");	
+		//		qAgent.incrementQValue(currentState, "North", 1.0);
+
 		log("Legal actions in state: " + getLegalActions(currentState).toString());
-		if(getLegalActions(currentState).contains("North"))
-		{
-			log("North is a possible action. ");
-			takeAction("North");	
-		}
-		else if(getLegalActions(currentState).contains("East"))
-		{
-			log("East is a possible action. ");
-			takeAction("East");	
-		}
-		else if(getLegalActions(currentState).contains("South"))
-		{
-			log("South is a possible action. ");
-			takeAction("South");	
-		}
-		else if(getLegalActions(currentState).contains("West"))
-		{
-			log("West is a possible action. ");
-			takeAction("West");	
-		}
+
+		String bestAction = qAgent.getAction(currentState, explorationRate, getLegalActions(currentState));
+		qAgent.update(currentState, bestAction, getNextState(currentState, bestAction), getReward(currentState, bestAction));
+		takeAction(bestAction);
+		
 		
 		adjustCamera();
-
 		if(agent.getHealthPercent() <= 50) //Health check
 		{
 			pause = true;
@@ -160,7 +156,7 @@ public class Artificial_Intelligence_Project extends Script
 	{
 		g.setPaint(Color.WHITE);
 		g.drawString("Debug Information: ", 5, 30);
-		g.drawString("Player Grid Location (X,Y,Z): (" + agent.getX() + "," + agent.getY() + "," + agent.getZ() + ")", 5, 45);
+		g.drawString("Player Grid Location (X, Y, Z): (" + agent.getX() + ", " + agent.getY() + ", " + agent.getZ() + ")", 5, 45);
 		g.drawString("Agent Inventory Spaces Remaining: " + getInventory().getEmptySlotCount(), 5, 90);
 		g.drawString("Gathering enabled: " + gather, 5, 120);
 		g.drawString("Pause enabled: " + pause, 5, 135);
@@ -246,12 +242,12 @@ public class Artificial_Intelligence_Project extends Script
 	{
 		log("Emptying inventory in Lumbridge castle bank...");
 
-		if (!Banks.LUMBRIDGE_UPPER.contains(myPosition())) //If the agent's character is not in Lumbridge castle bank
+		while(!Banks.LUMBRIDGE_UPPER.contains(myPosition())) //If the agent's character is not in Lumbridge castle bank
 		{
 			getWalking().webWalk(Banks.LUMBRIDGE_UPPER); //Move agent's character into the Lumbridge castle bank
 		}
 
-		else if (!getBank().isOpen()) //If the bank interface is not open
+		if(!getBank().isOpen()) //If the bank interface is not open
 		{
 			getBank().open(); //Open the bank interface
 			getBank().depositAll(); //Deposit all items in the agent's character's inventory
@@ -270,7 +266,7 @@ public class Artificial_Intelligence_Project extends Script
 		getCamera().moveYaw(agent.getRotationForCamera());
 	}
 
-	ArrayList<String> getLegalActions(State s)
+	ArrayList<String> getLegalActions(State s) //TODO: Change this to be able to be sent to State constructor
 	{
 		ArrayList<String> legalActions = new ArrayList<String>();
 		List<Position> temp = currentState.getConsiderArea().getPositions();
@@ -295,66 +291,98 @@ public class Artificial_Intelligence_Project extends Script
 		//		if(pathPositions == null)
 		//			log("Adjacent to a tree");
 
-		if(!s.inventoryFull && pathPositions == null && firstPathFound) //TODO check for being beside a tree
+		if(!s.inventoryFull && pathPositions == null && firstPathFound)
 			legalActions.add("Chop Wood");
-		if(!s.inventoryEmpty)
-			legalActions.add("Bank");
 		return legalActions;
 	}
-	
+
 	void takeAction(String action)
 	{
 		log("Take action has been called.");
 		Position agentPosition = currentState.getAgentPosition();
-		
+
 		if(action.equals("North"))
 		{
 			log("Action to be taken: North");
-			
+
 			Position north = new Position(agentPosition.getX(), agentPosition.getY()+1, agentPosition.getZ());
 			WalkingEvent desiredMovement = new WalkingEvent(north);
 			desiredMovement.setMinDistanceThreshold(0);
-			
+
 			execute(desiredMovement);
 		}
 		if(action.equals("East"))
 		{
 			log("Action to be taken: East");
-			
+
 			Position east = new Position(agentPosition.getX()+1, agentPosition.getY(), agentPosition.getZ());
 			WalkingEvent desiredMovement = new WalkingEvent(east);
 			desiredMovement.setMinDistanceThreshold(0);
-			
+
 			execute(desiredMovement);
 		}
 		if(action.equals("South"))
 		{
 			log("Action to be taken: South");
-			
+
 			Position south = new Position(agentPosition.getX(), agentPosition.getY()-1, agentPosition.getZ());
 			WalkingEvent desiredMovement = new WalkingEvent(south);
 			desiredMovement.setMinDistanceThreshold(0);
-			
+
 			execute(desiredMovement);
 		}
 		if(action.equals("West"))
 		{
 			log("Action to be taken: West");
-			
+
 			Position west = new Position(agentPosition.getX()-1, agentPosition.getY(), agentPosition.getZ());
 			WalkingEvent desiredMovement = new WalkingEvent(west);
 			desiredMovement.setMinDistanceThreshold(0);
-			
+
 			execute(desiredMovement);
 		}
 		if(action.equals("Chop Wood"))
 		{
-			
+			if(closestTree != null)
+				chopTree(closestTree);
 		}
-		if(action.equals("Bank"))
+		if(action.equals("Bank")) //TODO: Should be the only option when your inventory is full, ignoring moves taken to actually get back to bank for now
 		{
-			
+
 		}
 	}
+
+	State getNextState(State currentState, String actionLabel)
+	{
+		boolean inventoryFull = currentState.inventoryFull;
+		Position nextPosition = currentState.getAgentPosition();
+
+		if(actionLabel.equals("North"))
+			nextPosition = new Position(nextPosition.getX(), nextPosition.getY()+1, nextPosition.getZ());
+		if(actionLabel.equals("East"))
+			nextPosition = new Position(nextPosition.getX()+1, nextPosition.getY(), nextPosition.getZ());
+		if(actionLabel.equals("South"))
+			nextPosition = new Position(nextPosition.getX(), nextPosition.getY()-1, nextPosition.getZ());
+		if(actionLabel.equals("West"))
+			nextPosition = new Position(nextPosition.getX()-1, nextPosition.getY(), nextPosition.getZ());
+		else //If action is to chop a tree
+			if(getInventory().getEmptySlotCount() - 1 == 0)
+				inventoryFull = true;
+
+		State nextState = new State(nextPosition, inventoryFull);
+
+		return nextState;
+	}
+	
+	double getReward(State currentState, String actionLabel)
+	{
+		double reward = -0.05;
+		
+		if(actionLabel.equals("Chop Wood"))
+			reward += 5.0;
+		
+		return reward;
+	}
+	
 }
 
