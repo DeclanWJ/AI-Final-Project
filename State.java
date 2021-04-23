@@ -19,12 +19,12 @@ public class State
 	Area initialArea;
 	boolean inventoryFull;
 	boolean inventoryEmpty;
+	ArrayList<String> legalActions;
 	
 	public State(Position agentPosition, boolean inventoryFull)
 	{
 //		this.agent = agent;
 		this.agentPosition = agentPosition;
-		
 		this.inventoryFull = inventoryFull;
 		createConsideredArea();
 		
@@ -72,6 +72,15 @@ public class State
 		return agentPosition;
 	}
 	
+	public ArrayList<String> getLegalActions()
+	{
+		return legalActions;
+	}
+	
+	public void setLegalActions(ArrayList<String> legalActions)
+	{
+		this.legalActions = legalActions;
+	}
 //	ArrayList<Action> getLegalActions()
 //	{
 //		

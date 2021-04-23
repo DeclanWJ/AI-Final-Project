@@ -5,8 +5,10 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -33,6 +35,7 @@ public class Artificial_Intelligence_Project extends Script
 	boolean gather = false;
 	boolean pause = false;
 	boolean firstPathFound = false;
+	String lastAction = "";
 
 	Area agentBounds;
 	Area consideredArea;
@@ -45,6 +48,7 @@ public class Artificial_Intelligence_Project extends Script
 	ArrayList<String> treeNames = new ArrayList<String>();
 	State currentState;
 	State startState;
+	Map<Position, Double> visitedPositions = new HashMap<Position, Double>();
 
 	double explorationRate; //Want an initially high value, and taper down as more information is gotten
 
@@ -68,10 +72,10 @@ public class Artificial_Intelligence_Project extends Script
 		getWalking().webWalk(startingPosition);
 
 		qAgent = new QLearning_Agent();
-		explorationRate = 1.0;
-		
+		explorationRate = 0.35;
+
 		startTime = System.currentTimeMillis();
-		startState = new State(agent.getPosition(), getInventory().isFull());
+		//		startState = new State(agent.getPosition(), getInventory().isFull(), getLegalActions(agent.getPosition()));
 	}
 
 	//Code will run when the script is closed
@@ -83,72 +87,77 @@ public class Artificial_Intelligence_Project extends Script
 	//Code will run every loop/tick - Bulk of code will stem from here (method calls will primarily occur here)
 	public int onLoop() throws InterruptedException 
 	{	
-		currentState = new State(agent.getPosition(), getInventory().isFull());
-		log("Current state was known: " + qAgent.checkIfKnown(currentState));
-
-//		log("Current state Qval information: " + qAgent.mapOfQValues.toString());
-		//		log("Incrementing value of North action...");	
-		//		qAgent.incrementQValue(currentState, "North", 1.0);
-
-		log("Legal actions in state: " + getLegalActions(currentState).toString());
-
-		String bestAction = qAgent.getAction(currentState, explorationRate, getLegalActions(currentState));
-		qAgent.update(currentState, bestAction, getNextState(currentState, bestAction), getReward(currentState, bestAction));
-		takeAction(bestAction);
-		
-		
-		adjustCamera();
-		if(agent.getHealthPercent() <= 50) //Health check
+		if(!agent.isAnimating()) //If the player is not doing anything, or has finished their last action
 		{
-			pause = true;
-			log("Agent has been paused, returning to start position.");
-			getWalking().webWalk(startingPosition);
-		}
+			currentState = new State(agent.getPosition(), getInventory().isFull());
+			currentState.setLegalActions(getLegalActions(agent.getPosition()));
+			//			log("Current state was known: " + qAgent.checkIfKnown(currentState));
 
-		if(pause == true && agent.getHealthPercent() == 100)
-		{
-			pause = false;
-			log("Agent has been un-paused.");
-		}
+			log("Current state Qval information: " + qAgent.mapOfQValues.get(agent.getPosition()).toString());
+			//		log("Incrementing value of North action...");	
+			//		qAgent.incrementQValue(currentState, "North", 1.0);
 
-		if(!pause) //Pause condtion
-		{
-			//If inventory is not full
-			if(!getInventory().isFull() && !agent.isAnimating())
+			log("Legal actions in state: " + getLegalActions(agent.getPosition()).toString());
+			
+			String bestAction = qAgent.getAction(currentState, explorationRate, getLegalActions(agent.getPosition()));
+			log("Best action found was: " + bestAction);
+			qAgent.update(currentState, bestAction, getNextState(currentState, bestAction), getReward(currentState, bestAction));
+			takeAction(bestAction);
+			lastAction = bestAction;
+			
+			adjustCamera();
+			while(agent.getHealthPercent() <= 50) //Health check
 			{
-				//			 && !areaContainsAnimatingPlayer(tree.getArea(2)) additional parameter for checking for other players near chosen tree
-				closestTree = getObjects().closest(realDistance, tree -> treeNames.contains(tree.getName()) && getMap().canReach(tree) && currentState.getConsiderArea().getPositions().contains(tree.getPosition())); //Using the OSBot API Filter object to find the closest tree of a valid name-type, that can be accessed by the agent's character
+				pause = true;
+				log("Agent has been paused, returning to start position.");
+				getWalking().webWalk(startingPosition);
+			}
 
-				if(closestTree == null) //If a tree meeting the filter requirements above is not found 
+			if(pause == true && agent.getHealthPercent() == 100)
+			{
+				pause = false;
+				log("Agent has been un-paused.");
+			}
+
+			if(!pause) //Pause condtion
+			{
+				//If inventory is not full
+				if(!getInventory().isFull() && !agent.isAnimating())
 				{
-					log("No valid trees nearby...");
-				}
+					//			 && !areaContainsAnimatingPlayer(tree.getArea(2)) additional parameter for checking for other players near chosen tree
+					closestTree = getObjects().closest(realDistance, tree -> treeNames.contains(tree.getName()) && getMap().canReach(tree) && currentState.getConsiderArea().getPositions().contains(tree.getPosition())); //Using the OSBot API Filter object to find the closest tree of a valid name-type, that can be accessed by the agent's character
 
-				else //If a tree meeting the filter requirements above is found
-				{
-					log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
-
-					pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
-					if(pathPositions != null)
+					if(closestTree == null) //If a tree meeting the filter requirements above is not found 
 					{
-						if(!firstPathFound)
-							firstPathFound = true;
-						log("Length of pathPositions list: " + (pathPositions.size() - 1));
+						log("No valid trees nearby...");
 					}
 
-					if(gather)
-						chopTree(closestTree);
-					//closestTree = null;
-				}	
+					else //If a tree meeting the filter requirements above is found
+					{
+						log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
+
+						pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
+						if(pathPositions != null)
+						{
+							if(!firstPathFound)
+								firstPathFound = true;
+							log("Length of pathPositions list: " + (pathPositions.size() - 1));
+						}
+
+						if(gather)
+							chopTree(closestTree);
+						//closestTree = null;
+					}	
+				}
+
+				//If inventory is full
+				if(getInventory().isFull())
+				{
+					bank(); 
+				}
 			}
 
-			//If inventory is full
-			if(getInventory().isFull())
-			{
-				bank(); 
-			}
 		}
-
 		return 1000; //Milliseconds until next loop/tick
 	}
 
@@ -167,16 +176,48 @@ public class Artificial_Intelligence_Project extends Script
 		else
 			g.drawString("Gathering Run Time (in seconds):", 5, 105);
 
-		if(currentState != null)
+		//		if(startingPosition != null)
+		//		{
+		//			g.setPaint(Color.BLUE);
+		//			g.draw(startingPosition.getPolygon(getBot()));
+		//			g.setPaint(Color.WHITE);
+		//		}
+		//		if(currentState != null)
+		//		{
+		//			List<Position> temp = currentState.getConsiderArea().getPositions();
+		//
+		//			g.setPaint(Color.WHITE);
+		//
+		//			for(int i = 0; i < temp.size(); i++)
+		//			{
+		//				g.drawPolygon(temp.get(i).getPolygon(getBot()));
+		//			}
+		//		}
+
+		if(currentState != null) //TODO: Only print each positions we've seen once
 		{
-			List<Position> temp = currentState.getConsiderArea().getPositions();
-
-			g.setPaint(Color.RED);
-
-			for(int i = 0; i < temp.size(); i++)
+			double stateValue = qAgent.computeValueFromQValues(currentState);
+			if(visitedPositions.containsKey(currentState.getAgentPosition())) //If position is known
 			{
-				g.drawPolygon(temp.get(i).getPolygon(getBot()));
+				visitedPositions.replace(currentState.getAgentPosition(), stateValue);
 			}
+			else //If position is not known
+			{
+				visitedPositions.put(currentState.getAgentPosition(), stateValue);
+			}
+
+			for(Position pos : visitedPositions.keySet())
+			{
+				if(visitedPositions.get(pos) >= 4.9)
+					g.setPaint(Color.GREEN);
+				else if(visitedPositions.get(pos) > 0.0)
+					g.setPaint(Color.YELLOW);
+				else
+					g.setPaint(Color.RED);
+
+				g.drawPolygon(pos.getPolygon(getBot()));
+			}
+
 		}
 
 		g.setPaint(Color.WHITE);
@@ -191,16 +232,15 @@ public class Artificial_Intelligence_Project extends Script
 			g.drawString("Target Tree not selected", 5, 60);
 		}
 
-		if(pathPositions != null)
-		{
-			//			g.setPaint(Color.WHITE);
-
-			for(int i = 0; i < pathPositions.size(); i++)
-			{
-				g.drawPolygon(pathPositions.get(i).getPolygon(getBot()));
-			}
-		}
-
+		//		if(pathPositions != null)
+		//		{
+		//			//			g.setPaint(Color.WHITE);
+		//
+		//			for(int i = 0; i < pathPositions.size(); i++)
+		//			{
+		//				g.drawPolygon(pathPositions.get(i).getPolygon(getBot()));
+		//			}
+		//		}
 	}
 
 	public boolean areaContainsAnimatingPlayer(Area a) 
@@ -230,9 +270,6 @@ public class Artificial_Intelligence_Project extends Script
 
 		//		walkToNode = new WebWalkEvent(tree.getArea(1));
 		//		execute(walkToNode);
-		adjustCamera();
-		if(pathPositions != null)
-			getWalking().walkPath(pathPositions);
 		adjustCamera();
 		tree.interact("Chop down"); //Agent will select the "Chop down" action on the passed tree	
 	}
@@ -266,33 +303,30 @@ public class Artificial_Intelligence_Project extends Script
 		getCamera().moveYaw(agent.getRotationForCamera());
 	}
 
-	ArrayList<String> getLegalActions(State s) //TODO: Change this to be able to be sent to State constructor
+	ArrayList<String> getLegalActions(Position agentPosition) //TODO: Change this to be able to be sent to State constructor
 	{
 		ArrayList<String> legalActions = new ArrayList<String>();
+
 		List<Position> temp = currentState.getConsiderArea().getPositions();
 
-		Position agentPosition = s.getAgentPosition();
-		Position north = new Position(agentPosition.getX(), agentPosition.getY()+1, agentPosition.getZ());
-		Position east = new Position(agentPosition.getX()+1, agentPosition.getY(), agentPosition.getZ());
-		Position south = new Position(agentPosition.getX(), agentPosition.getY()-1, agentPosition.getZ());
-		Position west = new Position(agentPosition.getX()-1, agentPosition.getY(), agentPosition.getZ());
+		Position currentAgentPosition = agentPosition;
+		Position north = new Position(currentAgentPosition.getX(), currentAgentPosition.getY()+1, currentAgentPosition.getZ());
+		Position east = new Position(currentAgentPosition.getX()+1, currentAgentPosition.getY(), currentAgentPosition.getZ());
+		Position south = new Position(currentAgentPosition.getX(), currentAgentPosition.getY()-1, currentAgentPosition.getZ());
+		Position west = new Position(currentAgentPosition.getX()-1, currentAgentPosition.getY(), currentAgentPosition.getZ());
 
-		if(getMap().canReach(north) && getMap().realDistance(agentPosition, north) <= 2 && temp.contains(north))
+		if(getMap().canReach(north) && getMap().realDistance(currentAgentPosition, north) <= 2 && temp.contains(north))
 			legalActions.add("North");
-		if(getMap().canReach(east) && getMap().realDistance(agentPosition, east) <= 2 && temp.contains(east))
+		if(getMap().canReach(east) && getMap().realDistance(currentAgentPosition, east) <= 2 && temp.contains(east))
 			legalActions.add("East");
-		if(getMap().canReach(south) && getMap().realDistance(agentPosition, south) <= 2 && temp.contains(south))
+		if(getMap().canReach(south) && getMap().realDistance(currentAgentPosition, south) <= 2 && temp.contains(south))
 			legalActions.add("South");
-		if(getMap().canReach(west) && getMap().realDistance(agentPosition, west) <= 2 && temp.contains(west))
+		if(getMap().canReach(west) && getMap().realDistance(currentAgentPosition, west) <= 2 && temp.contains(west))
 			legalActions.add("West");
 
-		//		if(closestTree != null && pathPositions != null)
-		//			log("Distance to closest valid tree is: " + (pathPositions.size()-1));
-		//		if(pathPositions == null)
-		//			log("Adjacent to a tree");
-
-		if(!s.inventoryFull && pathPositions == null && firstPathFound)
+		if(!getInventory().isFull() && pathPositions == null && firstPathFound && lastAction != "Chop Wood")
 			legalActions.add("Chop Wood");
+
 		return legalActions;
 	}
 
@@ -343,6 +377,8 @@ public class Artificial_Intelligence_Project extends Script
 		}
 		if(action.equals("Chop Wood"))
 		{
+			log("Action to be taken: Chop Wood");
+
 			if(closestTree != null)
 				chopTree(closestTree);
 		}
@@ -370,19 +406,20 @@ public class Artificial_Intelligence_Project extends Script
 				inventoryFull = true;
 
 		State nextState = new State(nextPosition, inventoryFull);
+		nextState.setLegalActions(getLegalActions(nextPosition));
 
 		return nextState;
 	}
-	
+
 	double getReward(State currentState, String actionLabel)
 	{
 		double reward = -0.05;
-		
+
 		if(actionLabel.equals("Chop Wood"))
 			reward += 5.0;
-		
+
 		return reward;
 	}
-	
+
 }
 

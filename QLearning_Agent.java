@@ -98,10 +98,33 @@ public class QLearning_Agent
 	{
 		String bestAction = computeActionFromQValues(state);
 		
+		if(getQValue(state, "Chop Wood") != 0.0)
+		{
+			bestAction = "Chop Wood";
+		}
+		
 		if(bestAction == null)
 			return 0.0;
 		
 		return getQValue(state, bestAction);
+	}
+	
+	double computeStateValueFromQValues(State state)
+	{
+		String bestAction = computeActionFromQValues(state);
+		double max = Double.NEGATIVE_INFINITY;
+		
+		for(String actionLabel : mapOfQValues.get(state.getAgentPosition()).keySet())
+		{
+			double qVal = getQValue(state, actionLabel);
+			if(qVal > max)
+			{
+				max = qVal;
+				bestAction = actionLabel;
+			}
+		}
+		
+		return max;
 	}
 	
 	String computeActionFromQValues(State state) //TODO: Find a way to pass legal actions of the state here to choose randomly if all 0s
@@ -111,7 +134,7 @@ public class QLearning_Agent
 		boolean qValsAllSame = true;
 		double firstQVal = getQValue(state, "North");
 		
-		for(String actionLabel : mapOfQValues.get(state.getAgentPosition()).keySet())
+		for(String actionLabel : state.getLegalActions())
 		{
 			double qVal = getQValue(state, actionLabel);
 			if(qVal > max)
@@ -128,15 +151,8 @@ public class QLearning_Agent
 		if(qValsAllSame)
 		{
 			Random r = new Random();
-			int randomActionIndex = r.nextInt(4); //Random int 0 to 3
-			if(randomActionIndex == 0)
-				bestAction = "North";
-			if(randomActionIndex == 1)
-				bestAction = "East";
-			if(randomActionIndex == 2)
-				bestAction = "South";
-			if(randomActionIndex == 3)
-				bestAction = "West";	
+			int randomActionIndex = r.nextInt(state.getLegalActions().size()); //Random int 0 to 3
+			bestAction = state.getLegalActions().get(randomActionIndex);	
 		}
 		
 		return bestAction;
