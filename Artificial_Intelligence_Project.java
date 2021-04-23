@@ -35,6 +35,7 @@ public class Artificial_Intelligence_Project extends Script
 	boolean gather = false;
 	boolean pause = false;
 	boolean firstPathFound = false;
+	boolean setupBanking;
 	String lastAction = "";
 
 	Area agentBounds;
@@ -58,6 +59,7 @@ public class Artificial_Intelligence_Project extends Script
 		super.onStart();
 		//treeNames.add("Willow");
 		treeNames.add("Tree");
+		treeNames.add("Dead tree");
 		//treeNames.add("Strong Yew");
 
 		pathFinder = new LocalPathFinder(getBot());
@@ -67,9 +69,13 @@ public class Artificial_Intelligence_Project extends Script
 		log("Starting position is: " + startingPosition);
 
 		while(!getInventory().isEmpty())
+		{
+			setupBanking = true;
 			bank();
-
-		getWalking().webWalk(startingPosition);
+			setupBanking = false;
+		}
+		if(agent.getPosition() != startingPosition)
+			getWalking().webWalk(startingPosition);
 
 		qAgent = new QLearning_Agent();
 		explorationRate = 0.35;
@@ -89,6 +95,13 @@ public class Artificial_Intelligence_Project extends Script
 	{	
 		if(!agent.isAnimating()) //If the player is not doing anything, or has finished their last action
 		{
+			//If inventory is full
+			if(getInventory().isFull())
+			{
+				bank();
+				startTime = System.currentTimeMillis(); //Use this to start the next run after returning to the start position
+			}
+			
 			currentState = new State(agent.getPosition(), getInventory().isFull());
 			currentState.setLegalActions(getLegalActions(agent.getPosition()));
 			//			log("Current state was known: " + qAgent.checkIfKnown(currentState));
@@ -105,7 +118,7 @@ public class Artificial_Intelligence_Project extends Script
 			takeAction(bestAction);
 			lastAction = bestAction;
 			
-			adjustCamera();
+//			adjustCamera();
 			while(agent.getHealthPercent() <= 50) //Health check
 			{
 				pause = true;
@@ -118,7 +131,7 @@ public class Artificial_Intelligence_Project extends Script
 				pause = false;
 				log("Agent has been un-paused.");
 			}
-
+			
 			if(!pause) //Pause condtion
 			{
 				//If inventory is not full
@@ -134,31 +147,24 @@ public class Artificial_Intelligence_Project extends Script
 
 					else //If a tree meeting the filter requirements above is found
 					{
-						log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
+//						log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
 
 						pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
 						if(pathPositions != null)
 						{
 							if(!firstPathFound)
 								firstPathFound = true;
-							log("Length of pathPositions list: " + (pathPositions.size() - 1));
+//							log("Length of pathPositions list: " + (pathPositions.size() - 1));
 						}
-
+//
 						if(gather)
 							chopTree(closestTree);
-						//closestTree = null;
 					}	
-				}
-
-				//If inventory is full
-				if(getInventory().isFull())
-				{
-					bank(); 
 				}
 			}
 
 		}
-		return 1000; //Milliseconds until next loop/tick
+		return 500; //Milliseconds until next loop/tick
 	}
 
 	public void onPaint(Graphics2D g)
@@ -170,7 +176,8 @@ public class Artificial_Intelligence_Project extends Script
 		g.drawString("Gathering enabled: " + gather, 5, 120);
 		g.drawString("Pause enabled: " + pause, 5, 135);
 		g.drawString("Current state exists: " + (currentState != null), 5, 150);
-
+		g.drawString("Current run time since last start: " + ((double)(System.currentTimeMillis() - (double)startTime) / 1000), 5, 165);
+		
 		if(!gatherRunTimes.isEmpty())
 			g.drawString("Gathering Run Time (in seconds):" + gatherRunTimes.toString(), 5, 105);
 		else
@@ -270,7 +277,7 @@ public class Artificial_Intelligence_Project extends Script
 
 		//		walkToNode = new WebWalkEvent(tree.getArea(1));
 		//		execute(walkToNode);
-		adjustCamera();
+//		adjustCamera();
 		tree.interact("Chop down"); //Agent will select the "Chop down" action on the passed tree	
 	}
 
@@ -289,13 +296,14 @@ public class Artificial_Intelligence_Project extends Script
 			getBank().open(); //Open the bank interface
 			getBank().depositAll(); //Deposit all items in the agent's character's inventory
 			getBank().close(); //Close the bank interface
-			gatherRunTimes.add(((double)(System.currentTimeMillis() - (double)startTime) / 1000));
-			startTime = System.currentTimeMillis();
+			if(!setupBanking)
+				gatherRunTimes.add(((double)(System.currentTimeMillis() - (double)startTime) / 1000));
+//			startTime = System.currentTimeMillis(); //Use if want to start run time after banking, but before going back to start position
 			if(getInventory().isEmpty())
 				getWalking().webWalk(startingPosition); //Move agent's character back to the starting tile
 		}
 
-		adjustCamera();
+//		adjustCamera();
 	}
 
 	public void adjustCamera()
