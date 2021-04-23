@@ -139,5 +139,15 @@ Consider:
   + If we want to store q values in a file, we would want to keep track of the last epsilon value used
   + We need reference to legal actions in the current state. (sending a list of legal actions to the state when we create it, so we can reference it)
 
+Meeting #9 (4/22/2021)
 
+Progress:
+  + **Got Q learning working!** For the most part..
+  + Visualzation of state values within the environment   
+
+Consider:
+  + Cutting tree gives double reward, change how we award points --> **RESOLVED**
+  + Reward for action of cutting tree in current state stacks meaning cutting a tree multiple times would make a state more valuable. (mess with that??)
+  + Maybe mess around with the negative punishment of staying alive , to deter waiting around for a tree
+  + Focus on storing Q values in a file, so we can use them and better understand how it learns overtime
   
