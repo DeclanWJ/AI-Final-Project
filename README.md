@@ -150,4 +150,25 @@ Consider:
   + Reward for action of cutting tree in current state stacks meaning cutting a tree multiple times would make a state more valuable. (mess with that??)
   + Maybe mess around with the negative punishment of staying alive , to deter waiting around for a tree
   + Focus on storing Q values in a file, so we can use them and better understand how it learns overtime
+
+Meeting #10 (4/23/2021)
+
+Progress:
+  + Finished up the slides for our presentation, did our presentation.
+  + Ran our agent a couple time to get some results
+
+Meeting #11 (4/24/2021)
+
+Progress:
+  + Started working on using a text file to pull and push q values into 
+
+Meetin #12 (4/24/2021)
+
+Progress:
+  + Manged to get saving q values and epsilon to a file working!!
+  + Started training the agent intensly and hoping to find some good results
+  
+Consider:
+  + More colors for GUI for state values. Tweak values for each color in the GUI
+  + 
   
