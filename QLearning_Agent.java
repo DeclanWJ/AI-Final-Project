@@ -23,7 +23,6 @@ public class QLearning_Agent
 		newPositionActionValues.put("South", 0.0);
 		newPositionActionValues.put("West", 0.0);
 		newPositionActionValues.put("Chop Wood", 0.0);
-//		newPositionActionValues.put("Bank", 0.0);
 		
 		discount = 0.9;
 		learningRate = 1.0;
@@ -31,9 +30,9 @@ public class QLearning_Agent
 		fillMapForAreaBounds();
 	}
 	
-	public QLearning_Agent(HashMap<Position, Map<String, Double>> map)
+	public QLearning_Agent(Map<Position, Map<String, Double>> map)
 	{
-		mapOfQValues = map;
+		mapOfQValues = new HashMap<Position, Map<String, Double>>();
 		
 		newPositionActionValues = new HashMap<String, Double>();
 		newPositionActionValues.put("North", 0.0);
@@ -46,6 +45,14 @@ public class QLearning_Agent
 		learningRate = 1.0;
 		
 		fillMapForAreaBounds();
+		
+		for(Position position : map.keySet())
+		{
+			if(map.get(position) != null)
+			{
+				mapOfQValues.replace(position, map.get(position)); 	
+			}
+		}
 	}
 	
 	//TODO: Add in a method to handle adding an un-evaluated state to the map (i.e. first time visiting a tile, give it all 0s, or if "Chop Wood" is an option do so")
@@ -75,6 +82,24 @@ public class QLearning_Agent
 			
 			mapOfQValues.put(pos, temp);
 		}
+	}
+	
+	Map<Position, Map<String, Double>> getStateData()
+	{
+		return mapOfQValues;
+	}
+	
+	double getHighestQValueAtPosition(Position position)
+	{
+		double max = Double.NEGATIVE_INFINITY;
+		
+		for(String actionLabel : mapOfQValues.get(position).keySet())
+		{
+			if(mapOfQValues.get(position).get(actionLabel) > max)
+				max = mapOfQValues.get(position).get(actionLabel);
+		}
+		
+		return max;
 	}
 	
 	double getQValue(State state, String actionLabel)

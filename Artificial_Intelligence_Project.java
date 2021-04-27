@@ -3,12 +3,18 @@ package Scripts;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -50,10 +56,17 @@ public class Artificial_Intelligence_Project extends Script
 	State currentState;
 	State startState;
 	Map<Position, Double> visitedPositions = new HashMap<Position, Double>();
+	Map<Position, Map<String, Double>> mapOfQValues;
+	Map<Position, Map<String, Double>> tempMapOfQValues = new HashMap<Position, Map<String, Double>>();
 
 	double explorationRate; //Want an initially high value, and taper down as more information is gotten
 
 	QLearning_Agent qAgent;
+	File trainingData = new File("C:\\Users\\shane\\OSBot\\Data\\trainingData.txt");
+	FileWriter fileWriter;
+	PrintWriter dataRecorder;
+	Scanner scan;
+
 	public void onStart() throws InterruptedException
 	{
 		super.onStart();
@@ -77,8 +90,52 @@ public class Artificial_Intelligence_Project extends Script
 		if(agent.getPosition() != startingPosition)
 			getWalking().webWalk(startingPosition);
 
-		qAgent = new QLearning_Agent();
+		if(qAgent == null)
+			qAgent = new QLearning_Agent();
+
 		explorationRate = 0.35;
+
+		if(trainingData.exists())
+		{
+			log("File \"trainingData.txt\" found...");
+			try {
+				scan = new Scanner(trainingData);
+				log("Scanner is created in onStart() method.");
+			} catch (FileNotFoundException e) 
+			{
+				log("File not found when creating scanner in onStart() method.");
+			}
+
+			if(scan.hasNext()) //If file is found and not empty
+			{
+				try {
+					log("Scanner found that file was not empty, calling createMapFromRecord() method");
+					createMapFromRecord();
+					log("createMapFromRecord() method called successfully");
+				} catch (FileNotFoundException e) 
+				{
+					e.printStackTrace();
+				}
+
+				qAgent = new QLearning_Agent(tempMapOfQValues);
+				log("qAgent created with values from found file");
+				for(Position position : tempMapOfQValues.keySet())
+				{
+					visitedPositions.put(position, qAgent.getHighestQValueAtPosition(position));
+				}
+			}
+			else
+			{
+				qAgent = new QLearning_Agent();
+				log("qAgent created without values from found file");
+			}
+		}
+		else
+		{
+			log("File \"trainingData.txt\" not found. Creating file now...");
+			trainingData = new File("C:\\Users\\shane\\OSBot\\Data\\trainingData.txt");
+		}
+
 
 		startTime = System.currentTimeMillis();
 		//		startState = new State(agent.getPosition(), getInventory().isFull(), getLegalActions(agent.getPosition()));
@@ -87,8 +144,44 @@ public class Artificial_Intelligence_Project extends Script
 	//Code will run when the script is closed
 	public void onExit()throws InterruptedException
 	{
+		try {
+			fileWriter = new FileWriter(trainingData);
+			dataRecorder = new PrintWriter(fileWriter);
+		} catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		dataRecorder.println(explorationRate);
+		
+		for(Double time : gatherRunTimes)
+		{
+			dataRecorder.print(time + " ");
+		}
+		dataRecorder.println();
+		//	printWriter.println("Test print written in onStart() method.");
+		//	printWriter.println("10 15 20 30.5 70.5 22.25 89.1 69.0");
+		//	printWriter.close();
+		mapOfQValues = qAgent.getStateData();
+		//Use each visitedPosition for a key in the map for action data, and for the positions XYZs
+		for(Position position : visitedPositions.keySet())
+		{
+			dataRecorder.print(position.getX() + " ");
+			dataRecorder.print(position.getY() + " ");
+			dataRecorder.print(position.getZ() + " ");
+
+			for(Double qVal : mapOfQValues.get(position).values())
+			{
+				dataRecorder.print(qVal + " ");
+			}
+
+			dataRecorder.println();
+		}
+
+		dataRecorder.close();
+		log("State data for visited positions recorded in file: \"trainingData.txt\"");
 		super.onExit();
-	}
+	}	
 
 	//Code will run every loop/tick - Bulk of code will stem from here (method calls will primarily occur here)
 	public int onLoop() throws InterruptedException 
@@ -101,7 +194,7 @@ public class Artificial_Intelligence_Project extends Script
 				bank();
 				startTime = System.currentTimeMillis(); //Use this to start the next run after returning to the start position
 			}
-			
+
 			currentState = new State(agent.getPosition(), getInventory().isFull());
 			currentState.setLegalActions(getLegalActions(agent.getPosition()));
 			//			log("Current state was known: " + qAgent.checkIfKnown(currentState));
@@ -111,14 +204,14 @@ public class Artificial_Intelligence_Project extends Script
 			//		qAgent.incrementQValue(currentState, "North", 1.0);
 
 			log("Legal actions in state: " + getLegalActions(agent.getPosition()).toString());
-			
+
 			String bestAction = qAgent.getAction(currentState, explorationRate, getLegalActions(agent.getPosition()));
 			log("Best action found was: " + bestAction);
 			qAgent.update(currentState, bestAction, getNextState(currentState, bestAction), getReward(currentState, bestAction));
 			takeAction(bestAction);
 			lastAction = bestAction;
-			
-//			adjustCamera();
+
+			//			adjustCamera();
 			while(agent.getHealthPercent() <= 50) //Health check
 			{
 				pause = true;
@@ -131,7 +224,7 @@ public class Artificial_Intelligence_Project extends Script
 				pause = false;
 				log("Agent has been un-paused.");
 			}
-			
+
 			if(!pause) //Pause condtion
 			{
 				//If inventory is not full
@@ -147,16 +240,16 @@ public class Artificial_Intelligence_Project extends Script
 
 					else //If a tree meeting the filter requirements above is found
 					{
-//						log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
+						//						log("Nearest valid tree is a: " + closestTree.getName() + ", located at grid-space: (" + closestTree.getGridX() + ", " + closestTree.getGridY() + ")");
 
 						pathPositions = pathFinder.findPath(agent.getPosition(), closestTree);
 						if(pathPositions != null)
 						{
 							if(!firstPathFound)
 								firstPathFound = true;
-//							log("Length of pathPositions list: " + (pathPositions.size() - 1));
+							//							log("Length of pathPositions list: " + (pathPositions.size() - 1));
 						}
-//
+						//
 						if(gather)
 							chopTree(closestTree);
 					}	
@@ -177,7 +270,8 @@ public class Artificial_Intelligence_Project extends Script
 		g.drawString("Pause enabled: " + pause, 5, 135);
 		g.drawString("Current state exists: " + (currentState != null), 5, 150);
 		g.drawString("Current run time since last start: " + ((double)(System.currentTimeMillis() - (double)startTime) / 1000), 5, 165);
-		
+		g.drawString("Current exploration rate percentage: " + explorationRate, 5, 180);
+
 		if(!gatherRunTimes.isEmpty())
 			g.drawString("Gathering Run Time (in seconds):" + gatherRunTimes.toString(), 5, 105);
 		else
@@ -277,7 +371,7 @@ public class Artificial_Intelligence_Project extends Script
 
 		//		walkToNode = new WebWalkEvent(tree.getArea(1));
 		//		execute(walkToNode);
-//		adjustCamera();
+		//		adjustCamera();
 		tree.interact("Chop down"); //Agent will select the "Chop down" action on the passed tree	
 	}
 
@@ -298,12 +392,15 @@ public class Artificial_Intelligence_Project extends Script
 			getBank().close(); //Close the bank interface
 			if(!setupBanking)
 				gatherRunTimes.add(((double)(System.currentTimeMillis() - (double)startTime) / 1000));
-//			startTime = System.currentTimeMillis(); //Use if want to start run time after banking, but before going back to start position
+			//			startTime = System.currentTimeMillis(); //Use if want to start run time after banking, but before going back to start position
 			if(getInventory().isEmpty())
 				getWalking().webWalk(startingPosition); //Move agent's character back to the starting tile
 		}
 
-//		adjustCamera();
+		//		adjustCamera();
+		
+		if(explorationRate >= 0.075)
+			explorationRate -= 0.025;
 	}
 
 	public void adjustCamera()
@@ -421,12 +518,55 @@ public class Artificial_Intelligence_Project extends Script
 
 	double getReward(State currentState, String actionLabel)
 	{
-		double reward = -0.05;
+		double reward = -1.0;
 
 		if(actionLabel.equals("Chop Wood"))
-			reward += 5.0;
+			reward += 6.0;
 
 		return reward;
+	}
+
+	void createMapFromRecord() throws FileNotFoundException
+	{
+		if(scan == null) //if scan not already set (should be by the time this method gets called)
+		{
+			scan = new Scanner(trainingData);
+		}
+
+		explorationRate = scan.nextDouble(); //Reading exploration rate from file
+		scan.nextLine();
+		
+		String listOfTimes = scan.nextLine();
+		Scanner timeScan = new Scanner(listOfTimes);
+		
+		while(timeScan.hasNext())
+			gatherRunTimes.add(timeScan.nextDouble());
+		
+		while(scan.hasNextLine())
+		{
+			int x = 0, y = 0, z = 0;
+
+			if(scan.hasNext())
+			{
+				x = scan.nextInt();
+				y = scan.nextInt();
+				z = scan.nextInt();
+			}
+
+			Position tempKey = new Position(x, y, z);
+			Map<String, Double> tempQValues = new HashMap<String, Double>();
+			if(scan.hasNext())
+			{
+				tempQValues.put("North", scan.nextDouble());
+				tempQValues.put("East", scan.nextDouble());
+				tempQValues.put("South", scan.nextDouble());
+				tempQValues.put("West", scan.nextDouble());
+				tempQValues.put("Chop Wood", scan.nextDouble());
+			}
+
+			tempMapOfQValues.put(tempKey, tempQValues);
+			scan.nextLine();
+		}
 	}
 
 }
