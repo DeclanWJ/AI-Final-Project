@@ -4,6 +4,13 @@ Repository for our final project in Artificial Intelligence
 Old School Runescape Reinforcement Learning Agent Project
 Authors: Declan Jeffrey, Shane Phillips, Wren Maybury
 
+
+
+
+
+
+**Meeting Information:**
+
 Meeting # 1 (3/21/2021)
 Notes:
   Start with tree cutting, Q-learning agent. 
@@ -170,5 +177,17 @@ Progress:
   
 Consider:
   + More colors for GUI for state values. Tweak values for each color in the GUI
-  + 
+  
+  
+Meeting #12 (4/25/21-4/26/21)
+
+Progress:
+  + Written report, citations, training agent.
+  
+Meeting #13 (4/27/21)
+ 
+Progress: 
+  + Tweaked some visualization. Changed values and colors of GUI for coloring states based on values. 
+  + Trained the agent more
+  + Worked on the report more
   
