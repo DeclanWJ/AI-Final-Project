@@ -309,10 +309,16 @@ public class Artificial_Intelligence_Project extends Script
 
 			for(Position pos : visitedPositions.keySet())
 			{
-				if(visitedPositions.get(pos) >= 4.9)
+				if(visitedPositions.get(pos) >= 20.0)
+					g.setPaint(Color.CYAN);
+				else if(visitedPositions.get(pos) > 15.0)
+					g.setPaint(Color.BLUE);
+				else if(visitedPositions.get(pos) > 10.0)
 					g.setPaint(Color.GREEN);
-				else if(visitedPositions.get(pos) > 0.0)
+				else if(visitedPositions.get(pos) > 5.0)
 					g.setPaint(Color.YELLOW);
+				else if(visitedPositions.get(pos) > 0.0)
+					g.setPaint(Color.ORANGE);
 				else
 					g.setPaint(Color.RED);
 
