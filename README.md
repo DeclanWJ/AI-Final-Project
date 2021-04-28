@@ -14,7 +14,11 @@ The code within this repository was written during a project that makes use of O
  
  **Artificial_Intelligence_Project.java** - This file is the main file used by the script, containing all functionality and code that interacts with the OSBot client to gather information from the game space. This file also contains toggeable debugging information displays both actively updating on screen and in the OSBot client's logger. Determining legal actions, executing selected actions, calculation of states given actions, as well as keeping track of the length of gathering episodes all occur in this class.
  
+ ADD SOME FUNCTIONS
+ 
  **QLearning_Agent.java** - This class is responsible for storing learned Q-values in a hash map making use of positions in Old School Runescape and action labels to represent states. When starting without data, this class will handle creation of the hashmap to hold "blank" values for every position in the area an agent is restricted to. When data from previous learning is detected it is used to overwrite appropriate state information for positions recorded in the data. Calculation of optimal actions in a given state, actions chosen when the exploration rate comes into play, as well as updating of Q-values is handled in this class.
+
+ADD SOME FUNCTIONS
 
 **State.java** - This class is referenced in both other class files of this project for storing and retrieving simple information about the agent when it is in a given state. The main functionality outside of storing information is creation of the area the aagent is allowed to learn within in the game space (this is important because a vital aspect of our project relied on restricting the scope of the learning environment).
 
