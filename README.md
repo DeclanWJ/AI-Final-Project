@@ -4,9 +4,21 @@ Repository for our final project in Artificial Intelligence
 Old School Runescape Reinforcement Learning Agent Project
 Authors: Declan Jeffrey, Shane Phillips, Wren Maybury
 
+**Overview:**
 
+The code within this repository was written during a project that makes use of OSBot's ability to interface with Old School Runescape's game client and can control a player character with scripts written in Java using the OSBot API. With that tool we were originally going to create an artificial intelligence agent that made use of Q-Learning in order to learn how to gather several kinds of resources from the Old School Runescape world including logs, ores, and fish. Unfortunately due to time constraints we were only able to implement Q-Learning for an agent that learns how to chop down trees and store the logs it gathers in its bank, while saving its learned data so that the agent does not need to completey restart the learning process every time our script is run. While we found that our agent, at least with limited training, is commonly less effecient in terms of time spent filling its entire inventory with resources than an agent that simply gathers from the closest resource nodes, the Old School Runescape banning system designed to stop cheaters from exploiting automated game controllers takes considerably longer to detect our learning agent than the faster, simpler one. 
 
+**Files:**
 
+ The script for the learning agent makes use of several java class files in order to interact with the game client and learn how to gather resources through the OSBot software, and one text file to store any learned information about states accumulated during runtime:
+ 
+ **Artificial_Intelligence_Project.java** - This file is the main file used by the script, containing all functionality and code that interacts with the OSBot client to gather information from the game space. This file also contains toggeable debugging information displays both actively updating on screen and in the OSBot client's logger. Determining legal actions, executing selected actions, calculation of states given actions, as well as keeping track of the length of gathering episodes all occur in this class.
+ 
+ **QLearning_Agent.java** - This class is responsible for storing learned Q-values in a hash map making use of positions in Old School Runescape and action labels to represent states. When starting without data, this class will handle creation of the hashmap to hold "blank" values for every position in the area an agent is restricted to. When data from previous learning is detected it is used to overwrite appropriate state information for positions recorded in the data. Calculation of optimal actions in a given state, actions chosen when the exploration rate comes into play, as well as updating of Q-values is handled in this class.
+
+**State.java** - This class is referenced in both other class files of this project for storing and retrieving simple information about the agent when it is in a given state. The main functionality outside of storing information is creation of the area the aagent is allowed to learn within in the game space (this is important because a vital aspect of our project relied on restricting the scope of the learning environment).
+
+**trainingData.txt** - This file stores any information learned by the agent over the duration of the script including: Q-values of individual states, current exploration rate (the value decreases over time), and times for any completed gathering runs. The text file is read from in the beginning of the Artificial_Intelligence_Project.java class after the agent has reached to position all learning episodes start at. Information learned during the running of the script is stored into this file when the script is stopped. 
 
 
 **Meeting Information:**
