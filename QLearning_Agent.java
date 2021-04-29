@@ -13,6 +13,7 @@ public class QLearning_Agent
 	double discount;
 	double learningRate;
 	
+	//Constructor if no prior information is found
 	public QLearning_Agent()
 	{
 		mapOfQValues = new HashMap<Position, Map<String, Double>>();
@@ -30,6 +31,7 @@ public class QLearning_Agent
 		fillMapForAreaBounds();
 	}
 	
+	//Constructor for if previous learning information is found
 	public QLearning_Agent(Map<Position, Map<String, Double>> map)
 	{
 		mapOfQValues = new HashMap<Position, Map<String, Double>>();
@@ -55,10 +57,10 @@ public class QLearning_Agent
 		}
 	}
 	
-	//TODO: Add in a method to handle adding an un-evaluated state to the map (i.e. first time visiting a tile, give it all 0s, or if "Chop Wood" is an option do so")
-	boolean checkIfKnown(State s)
+	//Method checks if a state is already present in the hashmap, if it is not it is added with "blank" values (all 0.0s) for every action
+	boolean checkIfKnown(State state)
 	{
-		Position statePosition = s.getAgentPosition();
+		Position statePosition = state.getAgentPosition();
 		
 		if(mapOfQValues.get(statePosition) == null) //If position does not have state representation yet
 		{	
@@ -71,7 +73,8 @@ public class QLearning_Agent
 		return true; //If state was known return true
 	}
 	
-	void fillMapForAreaBounds() //Goes through entirety of restricted area for learning, and gives 0s for QValues in states
+	//Method is used to ensure every position (and the respective state) within the area the agent is restricted to has at least "blank" values (all 0.0s) for every action
+	void fillMapForAreaBounds()
 	{
 		Position boundsNW = new Position(3136, 3240, 0);
 		Position boundsSE = new Position(3266, 3200, 0);
@@ -84,11 +87,13 @@ public class QLearning_Agent
 		}
 	}
 	
+	//Method returns the current hash map of Q-value information for all states
 	Map<Position, Map<String, Double>> getStateData()
 	{
 		return mapOfQValues;
 	}
 	
+	//Method returns the highest Q-value for the state at the provided position
 	double getHighestQValueAtPosition(Position position)
 	{
 		double max = Double.NEGATIVE_INFINITY;
@@ -102,6 +107,7 @@ public class QLearning_Agent
 		return max;
 	}
 	
+	//Method returns the Q-value of a specified action in a given state
 	double getQValue(State state, String actionLabel)
 	{
 		return mapOfQValues.get(state.getAgentPosition()).get(actionLabel);
@@ -119,6 +125,7 @@ public class QLearning_Agent
 //		mapOfQValues.get(state.getAgentPosition()).replace(actionLabel, currentQVal + value);	
 //	}
 
+	//Method returns the highest Q-value for the state, but if the "Chop Wood" action has a non-zero value its value is used instead
 	double computeValueFromQValues(State state)
 	{
 		String bestAction = computeActionFromQValues(state);
@@ -134,25 +141,26 @@ public class QLearning_Agent
 		return getQValue(state, bestAction);
 	}
 	
-	double computeStateValueFromQValues(State state)
-	{
-		String bestAction = computeActionFromQValues(state);
-		double max = Double.NEGATIVE_INFINITY;
-		
-		for(String actionLabel : mapOfQValues.get(state.getAgentPosition()).keySet())
-		{
-			double qVal = getQValue(state, actionLabel);
-			if(qVal > max)
-			{
-				max = qVal;
-				bestAction = actionLabel;
-			}
-		}
-		
-		return max;
-	}
+//	double computeStateValueFromQValues(State state)
+//	{
+//		String bestAction = computeActionFromQValues(state);
+//		double max = Double.NEGATIVE_INFINITY;
+//		
+//		for(String actionLabel : mapOfQValues.get(state.getAgentPosition()).keySet())
+//		{
+//			double qVal = getQValue(state, actionLabel);
+//			if(qVal > max)
+//			{
+//				max = qVal;
+//				bestAction = actionLabel;
+//			}
+//		}
+//		
+//		return max;
+//	}
 	
-	String computeActionFromQValues(State state) //TODO: Find a way to pass legal actions of the state here to choose randomly if all 0s
+	//Method returns the action with the highest Q-value for the state, or a random legal action if all Q-values are the same at this state (should only occur on the first entrance into a state)
+	String computeActionFromQValues(State state)
 	{
 		String bestAction = null;
 		double max = Double.NEGATIVE_INFINITY;
@@ -183,6 +191,7 @@ public class QLearning_Agent
 		return bestAction;
 	}
 	
+	//Method returns an action with consideration for random action selection if the epsilon (exploration rate) value is relevant
 	String getAction(State state, Double epsilon, ArrayList<String> legalActions)
 	{
 		String action = null;
@@ -202,6 +211,7 @@ public class QLearning_Agent
 		return action;
 	}
 	
+	//Method updates Q-values for actions in given states based on values of the state resultant of the specified action given a reward value
 	void update(State state, String actionLabel, State nextState, double reward)
 	{
 		double currentQVal = getQValue(state, actionLabel);

@@ -11,25 +11,23 @@ import org.osbot.rs07.script.Script;
 
 public class State
 {
-//	Player agent;
 	Position agentPosition;
 	int range = 20;
 	Area agentBounds;
 	Area consideredArea;
 	Area initialArea;
 	boolean inventoryFull;
-	boolean inventoryEmpty;
 	ArrayList<String> legalActions;
 	
 	public State(Position agentPosition, boolean inventoryFull)
 	{
-//		this.agent = agent;
 		this.agentPosition = agentPosition;
 		this.inventoryFull = inventoryFull;
 		createConsideredArea();
 		
 	}
 	
+	//Method handles creation of the Area object (used by OSBot) that allows for selection of the area the agent will be restricted to while learning
 	public void createConsideredArea()
 	{
 		Position boundsNW = new Position(3136, 3240, 0);
@@ -49,7 +47,7 @@ public class State
 			consideredNW = new Position(consideredNW.getX(), 3240, consideredNW.getZ());
 		}
 		
-		Position consideredSE = initallyConsideredPositions.get(40);                      //SouthEast Corner
+		Position consideredSE = initallyConsideredPositions.get(40);                                     //SouthEast Corner
 		if(consideredSE.getX() > boundsSE.getX())
 		{
 			consideredSE = new Position(3266, consideredSE.getY(), consideredSE.getZ());
@@ -62,27 +60,27 @@ public class State
 		consideredArea = new Area(consideredNW, consideredSE);
 	}
 	
+	//Method returns consideredArea value
 	public Area getConsiderArea()
 	{
 		return consideredArea;
 	}
 	
+	//Method returns position of the agent in the state
 	public Position getAgentPosition()
 	{
 		return agentPosition;
 	}
 	
+	//Method returns the list of legalActions for the current state
 	public ArrayList<String> getLegalActions()
 	{
 		return legalActions;
 	}
 	
+	//Method sets the list of legal action for the current state
 	public void setLegalActions(ArrayList<String> legalActions)
 	{
 		this.legalActions = legalActions;
 	}
-//	ArrayList<Action> getLegalActions()
-//	{
-//		
-//	}
 }
